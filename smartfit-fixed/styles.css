@@ -1,0 +1,98 @@
+/* StyleSnap improved UI */
+:root{
+  --bg:#fef9f0;
+  --panel:#fff5f8;
+  --muted:#8b7fa8;
+  --accent1:#2c5282;
+  --accent2:#1e3a5f;
+  --glass: rgba(255,255,255,0.6);
+  --radius:14px;
+  --shadow: 0 12px 40px rgba(139,127,168,0.15);
+  --card-grad: linear-gradient(135deg,#fff5f8,#fef9f0);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(135deg,#fff9e6 0%,#ffe5f0 50%,#f0e5ff 100%);color:#1e3a5f;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;position:relative}
+html::before,body::before{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 20% 50%,rgba(255,229,240,0.4) 0%,transparent 50%),radial-gradient(circle at 80% 80%,rgba(240,229,255,0.4) 0%,transparent 50%);pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:1250px;margin:20px auto;padding:18px}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(255,255,255,0.7);border-radius:12px;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,0.8);border:1px solid rgba(44,82,130,0.1);backdrop-filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{width:56px;height:56px;flex-shrink:0}
+.product{display:flex;flex-direction:column}
+.product-name{font-weight:900;font-size:20px;color:var(--accent1);letter-spacing:0.4px}
+.product-name sup{font-size:10px;vertical-align:super;color:var(--accent1);opacity:0.7}
+.product-tag{font-size:12px;color:rgba(30,58,95,0.6);margin-top:2px}
+
+.top-actions{display:flex;align-items:center;gap:10px}
+.status-pill{background:linear-gradient(135deg, rgba(44,82,130,0.15), rgba(30,58,95,0.1));color:var(--accent1);padding:6px 10px;border-radius:999px;font-weight:700;box-shadow:inset 0 -8px 20px rgba(0,0,0,0.1), 0 2px 8px rgba(44,82,130,0.1);border:1px solid rgba(44,82,130,0.2)}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid rgba(44,82,130,0.1);color:var(--accent1)}
+
+/* Layout */
+.main{display:flex;gap:18px;margin-top:18px}
+.camera-section{flex:1;display:flex;flex-direction:column;gap:12px}
+.side-panel{width:380px;display:flex;flex-direction:column;gap:12px}
+
+/* Camera card */
+.camera-card{border-radius:14px;overflow:hidden}
+.camera-frame{position:relative;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#fff5f8,#fef9f0);box-shadow:0 18px 40px rgba(139,127,168,0.2),inset 0 1px 0 rgba(255,255,255,0.8);border:1px solid rgba(44,82,130,0.15)}
+#camera-video{width:100%;height:640px;object-fit:cover;display:block;filter:brightness(0.97) contrast(1.05)}
+#overlay-canvas{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+#guide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity 0.3s ease}
+#guide.active{opacity:1}
+#silhouette{width:75%;height:auto;opacity:0.9;filter:drop-shadow(0 6px 24px rgba(255,126,185,0.35));transition:all 0.3s ease}
+#silhouette .segment-line{stroke:rgba(0,0,0,0.75);stroke-width:0.5;stroke-dasharray:22 12;stroke-linecap:round;transition:stroke 0.3s ease, opacity 0.3s ease}
+#silhouette #measurement-guides{opacity:0.85;transition:opacity 0.3s ease}
+#silhouette #measurement-labels{opacity:0.9;transition:opacity 0.3s ease, fill 0.3s ease}
+#guide.active #silhouette{opacity:1;filter:drop-shadow(0 12px 32px rgba(255,126,185,0.4))}
+#guide.fit #silhouette .segment-line{stroke-opacity:1}
+#guide.fit #silhouette #measurement-labels{fill:rgba(44,82,130,0.95)}
+#guide.out-of-bounds #silhouette .segment-line{stroke-opacity:0.6}
+#guide.out-of-bounds #silhouette #measurement-labels{fill:rgba(255,129,140,0.95)}
+#guide.fit #silhouette{filter:drop-shadow(0 8px 28px rgba(44,82,130,0.4))}
+#guide.out-of-bounds #silhouette{filter:drop-shadow(0 8px 28px rgba(255,107,134,0.35))}
+@keyframes pulse-outline{0%,100%{transform:scale(1);opacity:0.9}50%{transform:scale(1.02);opacity:1}}
+#guide.active #silhouette{animation:pulse-outline 2s ease-in-out infinite}
+#guide.fit #silhouette{animation:none}
+
+/* animated hint */
+.camera-hint{position:absolute;left:14px;bottom:14px;background:rgba(255,255,255,0.85);padding:8px 12px;border-radius:8px;color:var(--accent1);font-weight:700;backdrop-filter: blur(4px);border:1px solid rgba(44,82,130,0.1);box-shadow:0 2px 8px rgba(139,127,168,0.15)}
+
+/* camera controls */
+.camera-controls{display:flex;align-items:center;gap:12px;padding:12px;background:transparent}
+.btn{border:0;padding:10px 14px;border-radius:10px;font-weight:800;cursor:pointer;background:rgba(255,255,255,0.8);color:var(--accent1);box-shadow: 0 6px 18px rgba(139,127,168,0.15),inset 0 1px 0 rgba(255,255,255,0.9);border:1px solid rgba(44,82,130,0.15);transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease}
+.btn:hover{border-color:rgba(44,82,130,0.3);box-shadow:0 8px 24px rgba(139,127,168,0.2),inset 0 1px 0 rgba(255,255,255,1);background:rgba(255,255,255,0.95)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn.primary{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#ffffff;box-shadow:0 12px 28px rgba(44,82,130,0.25)}
+.btn.ghost{background:transparent;border:1px solid rgba(44,82,130,0.2);color:var(--accent1)}
+.btn.accent{background:transparent;border:1px solid rgba(44,82,130,0.25);color:var(--accent1);font-weight:900}
+
+/* Measurements panel */
+.measurements-panel{background:rgba(255,255,255,0.7);padding:12px;border-radius:12px;box-shadow:0 12px 30px rgba(139,127,168,0.15),inset 0 1px 0 rgba(255,255,255,0.8);border:1px solid rgba(44,82,130,0.15);backdrop-filter:blur(10px)}
+.measurements-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.measurements-header .title{font-weight:900;font-size:16px;color:var(--accent1)}
+.measurements-header .sub{font-size:11px;color:rgba(30,58,95,0.6)}
+.measurements-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.measurement-card{background:linear-gradient(135deg, rgba(44,82,130,0.08), rgba(30,58,95,0.05));padding:10px;border-radius:10px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;border:1px solid rgba(44,82,130,0.2);backdrop-filter:blur(5px);transition:transform .2s ease, box-shadow .2s ease}
+.measurement-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(44,82,130,0.2)}
+.measurement-name{font-size:12px;color:rgba(30,58,95,0.7)}
+.measurement-value{font-weight:900;color:var(--accent1);font-size:16px}
+.capture-status{font-size:12px;font-weight:700;padding:4px 8px;min-height:20px}
+
+/* side panel */
+.card{background:rgba(255,255,255,0.7);padding:12px;border-radius:12px;box-shadow:0 10px 30px rgba(139,127,168,0.15),inset 0 1px 0 rgba(255,255,255,0.8);border:1px solid rgba(44,82,130,0.15);backdrop-filter:blur(10px)}
+.upload-row{display:flex;gap:10px}
+.upload-box{height:120px;border-radius:10px;border:1px dashed rgba(44,82,130,0.3);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;background:linear-gradient(135deg, rgba(44,82,130,0.05), rgba(30,58,95,0.03));transition:border-color .2s ease, background .2s ease}
+.upload-box:hover{border-color:rgba(44,82,130,0.5);background:linear-gradient(135deg, rgba(44,82,130,0.1), rgba(30,58,95,0.05))}
+.preview-empty{color:rgba(30,58,95,0.3);font-weight:700;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.result-area{position:relative;min-height:200px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.placeholder{height:160px;display:flex;align-items:center;justify-content:center;color:rgba(30,58,95,0.3);font-weight:700}
+.result img{max-height:160px;width:auto;display:block;border-radius:8px;box-shadow:0 8px 20px rgba(139,127,168,0.3)}
+.result-actions{display:flex;gap:8px;margin-top:8px}
+.note{font-size:12px;color:rgba(30,58,95,0.7);line-height:1.5}
+
+/* utility */
+.row{display:flex;gap:8px;align-items:center}
+.row.between{justify-content:space-between}
+.actions-row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.footer{margin-top:18px;text-align:center;color:rgba(30,58,95,0.5);font-size:13px}
+@media(max-width:1000px){.main{flex-direction:column}.side-panel{width:100%}}

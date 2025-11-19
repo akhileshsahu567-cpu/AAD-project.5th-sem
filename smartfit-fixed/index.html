@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>StyleSnap™ — AI Try-On</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <!-- TF.js + MoveNet -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.9.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@0.0.8/dist/pose-detection.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <linearGradient id="s-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1e3a5f"/>
+              <stop offset="100%" stop-color="#2c5282"/>
+            </linearGradient>
+          </defs>
+          <!-- Stylized S logo with intertwined curves -->
+          <g fill="none" stroke="url(#s-gradient)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Left/thicker S curve -->
+            <path d="M30 25 C30 15, 40 10, 50 15 C60 20, 65 30, 60 40 C55 50, 45 55, 40 50 C35 45, 35 40, 40 45 C45 50, 55 55, 60 60 C65 65, 70 75, 65 85 C60 95, 50 100, 40 95" stroke-width="10"/>
+            <!-- Right/thinner S curve that tucks in -->
+            <path d="M50 20 C45 15, 35 20, 35 30 C35 40, 45 45, 50 50 C55 55, 60 65, 55 75 C50 85, 40 90, 35 85" stroke-width="6" opacity="0.9"/>
+          </g>
+        </svg>
+        <div class="product">
+          <div class="product-name">StyleSnap<sup>™</sup></div>
+          <div class="product-tag">Try-On • Measurements</div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="status-pill" id="status-mock">Mock</div>
+        <div class="icon-btn" id="help-btn" title="Quick tips">?</div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="camera-section">
+        <div class="camera-card">
+          <div class="camera-frame">
+            <video id="camera-video" autoplay playsinline muted></video>
+            <canvas id="overlay-canvas"></canvas>
+            <div id="guide">
+              <svg id="silhouette" viewBox="0 0 200 500" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <!-- Measurement guide stripes -->
+                <g id="measurement-guides">
+                  <line x1="0" x2="200" y1="90" y2="90" class="segment-line segment-head" data-label="Head" />
+                  <line x1="0" x2="200" y1="130" y2="130" class="segment-line segment-shoulder" data-label="Shoulders" />
+                  <line x1="0" x2="200" y1="170" y2="170" class="segment-line segment-chest" data-label="Chest" />
+                  <line x1="0" x2="200" y1="215" y2="215" class="segment-line segment-waist" data-label="Waist" />
+                  <line x1="0" x2="200" y1="260" y2="260" class="segment-line segment-hips" data-label="Hips" />
+                  <line x1="0" x2="200" y1="320" y2="320" class="segment-line segment-thighs" data-label="Thighs" />
+                  <line x1="0" x2="200" y1="375" y2="375" class="segment-line segment-calves" data-label="Calves" />
+                </g>
+                
+                <!-- Measurement labels -->
+                <g id="measurement-labels" font-family="Inter, sans-serif" font-size="8" fill="rgba(44,82,130,0.8)" font-weight="700">
+                  <text x="10" y="90" text-anchor="start">Head</text>
+                  <text x="10" y="130" text-anchor="start">Shoulders</text>
+                  <text x="198" y="170" text-anchor="end">Chest</text>
+                  <text x="198" y="215" text-anchor="end">Waist</text>
+                  <text x="198" y="260" text-anchor="end">Hips</text>
+                  <text x="198" y="320" text-anchor="end">Thighs</text>
+                  <text x="198" y="375" text-anchor="end">Calves</text>
+                </g>
+              </svg>
+            </div>
+            <div class="camera-hint" id="camera-hint">Center your body within the guide</div>
+          </div>
+
+          <div class="camera-controls">
+            <button class="btn primary" id="open-camera-btn">Open Camera</button>
+            <button class="btn ghost" id="capture-btn" disabled>Capture</button>
+            <button class="btn ghost" id="close-camera-btn" style="display:none;">Close</button>
+            <div class="capture-status" id="capture-status"></div>
+          </div>
+        </div>
+
+        <div class="measurements-panel" id="scan-output" style="display:none;">
+          <div class="measurements-header">
+            <div class="title">Measurements</div>
+            <div class="sub">Auto-estimated</div>
+          </div>
+          <div class="measurements-grid" id="measurements-list">
+            <!-- populated by JS -->
+          </div>
+          <div class="actions-row">
+            <button class="btn accent" id="export-json">Export</button>
+            <button class="btn ghost" id="retake">Retake</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <div class="card upload-card">
+          <div class="upload-row">
+            <label class="upload-box" id="user-drop"><input type="file" id="user-file" accept="image/*" /><div id="user-preview-inner" class="preview-empty">User</div></label>
+            <label class="upload-box" id="garment-drop"><input type="file" id="garment-file" accept="image/png" /><div id="garment-preview-inner" class="preview-empty">Garment</div></label>
+          </div>
+          <div class="row between">
+            <button class="btn primary" id="upload-btn">Upload</button>
+            <button class="btn ghost" id="reset-btn">Reset</button>
+          </div>
+        </div>
+
+        <div class="card result-card">
+          <div class="result-area" id="result-area">
+            <img id="result-img" src="" alt="" style="display:none"/>
+            <div id="result-placeholder" class="placeholder">No result</div>
+            <div class="result-actions">
+              <a id="download-result" class="btn ghost" download style="display:none">Download</a>
+              <button id="open-result" class="btn ghost" style="display:none">Open</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card notes-card">
+          <div class="note">Tip: For best results, stand straight and ensure full body is visible.</div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">© StyleSnap™</footer>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
